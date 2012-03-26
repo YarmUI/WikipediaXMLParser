@@ -1,0 +1,9 @@
+{ "name": "WikipediaXMLParser"
+, "version": "0.0.1"
+, "engines": ["node >= 0.6.0"]
+, "main": "parser.js"
+, "dependencies":
+  { "libxmljs":         "*"
+  , "coffee-script":    ">= 1.1.1"
+  }
+}
