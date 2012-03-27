@@ -27,9 +27,9 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
       if res
         res = for str in res
           str.match(/\[\[([^\]\#\|]+)[^\]]*\]\]/m)[1]
+      index += 1
 
     [id, title, text] = ['', '', '']
-    index += 1
 
 parser.on 'warning', (warning) ->
   console.warn 'WARNING' + warning
