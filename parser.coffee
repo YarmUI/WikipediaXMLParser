@@ -16,7 +16,6 @@ index = 0
 rs.on 'data', (chunk) ->
   parser.push chunk if chunk
   process.stdout.write "\r#{index}\tred_d: #{red_d} \ttitle_d: #{title_d} \tlink_d: #{link_d}"
-  rs.pause() if !red_d || !title_d || !link_d
 
 red_ws.on 'drain', () ->
   red_d = true
@@ -40,9 +39,13 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
     res = text.match /\#REDIRECT \[\[([^\]\#]+)[^\]]*\]\]/m
     if res
       str = res[1].replace /\s/g, '_'
-      red_d = false if !red_ws.write "#{title} #{str}\n"
+      if !red_ws.write "#{title} #{str}\n"
+        red_d = false 
+        rs.pause()
     else
-      title_d = false if !title_ws.write "#{id} #{index} #{title}\n"
+      if !title_ws.write "#{id} #{index} #{title}\n"
+        title_d = false 
+        rs.pause()
       res = text.match /\[\[([^\]\#\|]+)[^\]]*\]\]/gm
       if res
         tmp = ''
@@ -50,7 +53,9 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
           str = str.match(/\[\[([^\]\#\|]+)[^\]]*\]\]/m)[1]
           str = str.replace /\s/g, '_'
           tmp += "#{index} #{str}\n"
-        link_d = false if !link_ws.write tmp
+        if !link_ws.write tmp
+          link_d = false 
+          rs.pause()
       index += 1
 
     [id, title, text] = ['', '', '']
