@@ -5,17 +5,17 @@ fs     = require 'fs'
 filename = 'test.xml'
 stack = []
 parser = new libxml.SaxPushParser()
-rs = fs.createReadStream filename, {encoding: 'utf8', bufferSize: 4*1024*1024}
-red_ws   = fs.createWriteStream 'redirect.txt', {encoding: 'utf8', bufferSize: 4*1024*1024}
-title_ws = fs.createWriteStream 'title.txt', {encoding: 'utf8', bufferSize: 4*1024*1024}
-link_ws  = fs.createWriteStream 'link.txt', {encoding: 'utf8', bufferSize: 4*1024*1024}
+rs = fs.createReadStream filename, {encoding: 'utf8', bufferSize: 1024*1024}
+red_ws   = fs.createWriteStream 'redirect.txt', {encoding: 'utf8'}
+title_ws = fs.createWriteStream 'title.txt', {encoding: 'utf8'}
+link_ws  = fs.createWriteStream 'link.txt', {encoding: 'utf8'}
 [id, title, text] = ['', '', '']
 [red_d, title_d, link_d] = [true, true, true]
 index = 0
 
 rs.on 'data', (chunk) ->
   parser.push chunk if chunk
-  process.stdout.write "\r#{index}"
+  process.stdout.write "\r#{index}\tred_d: #{red_d} \ttitle_d: #{title_d} \tlink_d: #{link_d}"
   rs.pause() if !red_d || !title_d || !link_d
 
 red_ws.on 'drain', () ->
@@ -45,10 +45,12 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
       title_d = false if !title_ws.write "#{id} #{index} #{title}\n"
       res = text.match /\[\[([^\]\#\|]+)[^\]]*\]\]/gm
       if res
+        tmp = ''
         for str in res
           str = str.match(/\[\[([^\]\#\|]+)[^\]]*\]\]/m)[1]
           str = str.replace /\s/g, '_'
-          link_d = false if !link_ws.write "#{index} #{str}\n"
+          tmp += "#{index} #{str}\n"
+        link_d = false if !link_ws.write tmp
       index += 1
 
     [id, title, text] = ['', '', '']
