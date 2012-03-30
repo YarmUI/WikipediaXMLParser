@@ -45,7 +45,7 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
         red_d = false 
         rs.pause()
     else
-      if !title_ws.write "#{id} #{index} #{title}\n"
+      if !title_ws.write "#{title}\n"
         title_d = false 
         rs.pause()
       res = text.match /\[\[([^\]\#\|]+)[^\]]*\]\]/gm
