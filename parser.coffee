@@ -4,32 +4,26 @@ fs     = require 'fs'
 filename = 'jawiki-latest-pages-articles.xml'
 stack = []
 parser = new libxml.SaxPushParser()
-rs = fs.createReadStream filename, encoding: 'utf8', bufferSize: 1024*1024
-red_ws   = fs.createWriteStream 'redirect.txt', encoding: 'utf8'
-title_ws = fs.createWriteStream 'title.txt', encoding: 'utf8'
-link_ws  = fs.createWriteStream 'link.txt', encoding: 'utf8'
+rs = fs.createReadStream filename, encoding: 'utf8'
+title_ws = fs.createWriteStream 'titles.txt', encoding: 'utf8'
+link_ws  = fs.createWriteStream 'links.txt',  encoding: 'utf8'
 [id, title, text] = ['', '', '']
-[red_d, title_d, link_d] = [true, true, true]
-index = 0
+[title_d, link_d] = [true, true]
 
 rs.on 'data', (chunk) ->
   parser.push chunk if chunk
-  process.stdout.write "\r#{index}\tred_d: #{red_d} \ttitle_d: #{title_d} \tlink_d: #{link_d}"
+  process.stdout.write "\r#{id}\ttitle_d: #{title_d} \tlink_d: #{link_d}"
 
 rs.on 'end', () ->
   process.stdout.write "\n"
 
-red_ws.on 'drain', () ->
-  red_d = true
-  rs.resume() if red_d && title_d && link_d
-
 title_ws.on 'drain', () ->
   title_d = true
-  rs.resume() if red_d && title_d && link_d
+  rs.resume() if title_d && link_d
 
 link_ws.on 'drain', () ->
   link_d = true
-  rs.resume() if red_d && title_d && link_d
+  rs.resume() if title_d && link_d
 
 parser.on 'startElementNS', (elem, attrs, prefix, uri, namespaces) ->
   stack.push elem
@@ -41,11 +35,11 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
     res = text.match /\#REDIRECT \[\[([^\]\#]+)[^\]]*\]\]/m
     if res
       str = res[1].replace /\s/g, '_'
-      if !red_ws.write "#{title} #{str}\n"
-        red_d = false 
+      if! title_ws.write "#{id} #{title} 1\n"
+        title_d = false 
         rs.pause()
     else
-      if !title_ws.write "#{title}\n"
+      if !title_ws.write "#{id} #{title} 0\n"
         title_d = false 
         rs.pause()
       res = text.match /\[\[([^\]\#\|]+)[^\]]*\]\]/gm
@@ -54,12 +48,10 @@ parser.on 'endElementNS', (elem, prefix, uri) ->
         for str in res
           str = str.match(/\[\[([^\]\#\|]+)[^\]]*\]\]/m)[1]
           str = str.replace /\s/g, '_'
-          tmp += "#{index} #{str}\n"
+          tmp += "#{id} #{str}\n"
         if !link_ws.write tmp
           link_d = false 
           rs.pause()
-      index += 1
-
     [id, title, text] = ['', '', '']
 
 parser.on 'warning', (warning) ->
