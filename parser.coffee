@@ -1,14 +1,13 @@
 libxml = require 'libxmljs'
 fs     = require 'fs'
 
-#filename = 'jawiki-latest-pages-articles.xml'
-filename = 'test.xml'
+filename = 'jawiki-latest-pages-articles.xml'
 stack = []
 parser = new libxml.SaxPushParser()
-rs = fs.createReadStream filename, {encoding: 'utf8', bufferSize: 1024*1024}
-red_ws   = fs.createWriteStream 'redirect.txt', {encoding: 'utf8'}
-title_ws = fs.createWriteStream 'title.txt', {encoding: 'utf8'}
-link_ws  = fs.createWriteStream 'link.txt', {encoding: 'utf8'}
+rs = fs.createReadStream filename, encoding: 'utf8', bufferSize: 1024*1024
+red_ws   = fs.createWriteStream 'redirect.txt', encoding: 'utf8'
+title_ws = fs.createWriteStream 'title.txt', encoding: 'utf8'
+link_ws  = fs.createWriteStream 'link.txt', encoding: 'utf8'
 [id, title, text] = ['', '', '']
 [red_d, title_d, link_d] = [true, true, true]
 index = 0
@@ -16,6 +15,9 @@ index = 0
 rs.on 'data', (chunk) ->
   parser.push chunk if chunk
   process.stdout.write "\r#{index}\tred_d: #{red_d} \ttitle_d: #{title_d} \tlink_d: #{link_d}"
+
+rs.on 'end', () ->
+  process.stdout.write "\n"
 
 red_ws.on 'drain', () ->
   red_d = true
